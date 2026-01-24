@@ -1,0 +1,401 @@
+const sampleText = `"Focus is the art of knowing what to ignore," wrote a thinker. RSVP reading keeps your gaze anchored while words flow through a fixed window. Punctuation slows the pace. Long words take a breath. Try adjusting the speed and jumping ahead or back by ten words.`;
+
+const inputText = document.getElementById("inputText");
+const loadSample = document.getElementById("loadSample");
+const epubFile = document.getElementById("epubFile");
+const loadEpub = document.getElementById("loadEpub");
+const parseStatus = document.getElementById("parseStatus");
+const wpmSlider = document.getElementById("wpm");
+const wpmValue = document.getElementById("wpmValue");
+const playButton = document.getElementById("play");
+const pauseButton = document.getElementById("pause");
+const resumeButton = document.getElementById("resume");
+const restartButton = document.getElementById("restart");
+const stableButton = document.getElementById("stable");
+const back10Button = document.getElementById("back10");
+const forward10Button = document.getElementById("forward10");
+const leftEl = document.getElementById("left");
+const pivotEl = document.getElementById("pivot");
+const rightEl = document.getElementById("right");
+const wordIndexEl = document.getElementById("wordIndex");
+const metaToggle = document.getElementById("metaToggle");
+const playStateEl = document.getElementById("playState");
+
+let tokens = [];
+let currentIndex = 0;
+let timerId = null;
+let isPlaying = false;
+let inputSegments = [];
+let inputRawText = "";
+let activeWordEl = null;
+let rampTimerId = null;
+let rampEnabled = true;
+let metaMode = "words";
+
+const RAMP_INTERVAL_MS = 20000;
+const RAMP_STEP = 20;
+const WORDS_PER_PAGE = 300;
+
+function setStatus(message) {
+  parseStatus.textContent = message;
+}
+
+function setPlayState(message) {
+  playStateEl.textContent = message;
+}
+
+function updateWpmLabel() {
+  wpmValue.textContent = `${wpmSlider.value} WPM`;
+}
+
+function showToken(token) {
+  if (!token) {
+    leftEl.textContent = "";
+    pivotEl.textContent = "";
+    rightEl.textContent = "";
+    return;
+  }
+
+  const core = token.core || "";
+  const index = Math.min(token.orp_index ?? 0, Math.max(core.length - 1, 0));
+  const left = core.slice(0, index);
+  const pivot = core.charAt(index) || "";
+  const right = core.slice(index + 1);
+
+  leftEl.textContent = `${token.prefix || ""}${left}`;
+  pivotEl.textContent = pivot;
+  rightEl.textContent = `${right}${token.suffix || ""}`;
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildInputSegments(rawText) {
+  const parts = rawText.match(/\s+|\S+/g) || [];
+  let wordIndex = 0;
+  inputSegments = parts.map((part) => {
+    const hasCore = /[\p{L}\p{N}]/u.test(part);
+    const segment = {
+      text: part,
+      isWord: hasCore,
+      wordIndex: hasCore ? wordIndex : null,
+    };
+    if (hasCore) {
+      wordIndex += 1;
+    }
+    return segment;
+  });
+}
+
+function renderInputContent() {
+  if (!inputSegments.length) {
+    inputText.innerText = inputRawText;
+    activeWordEl = null;
+    return;
+  }
+  const html = inputSegments
+    .map((segment) => {
+      const escaped = escapeHtml(segment.text).replace(/\n/g, "<br>");
+      if (segment.isWord) {
+        return `<span class=\"input-word\" data-index=\"${segment.wordIndex}\">${escaped}</span>`;
+      }
+      return escaped;
+    })
+    .join("");
+  inputText.innerHTML = html;
+  activeWordEl = null;
+}
+
+function highlightInputWord(activeIndex) {
+  if (!inputSegments.length) {
+    return;
+  }
+  if (activeWordEl) {
+    activeWordEl.classList.remove("input-highlight");
+  }
+  const next = inputText.querySelector(`[data-index=\"${activeIndex}\"]`);
+  if (next) {
+    next.classList.add("input-highlight");
+    activeWordEl = next;
+    next.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+  }
+}
+
+function updateMeta() {
+  const total = tokens.length;
+  const displayIndex = total === 0 ? 0 : Math.min(currentIndex + 1, total);
+  if (metaMode === "words") {
+    wordIndexEl.textContent = `${displayIndex} / ${total}`;
+    metaToggle.textContent = "Words";
+    return;
+  }
+
+  if (total === 0) {
+    wordIndexEl.textContent = "0% / 0 pages";
+    metaToggle.textContent = "% / pages";
+    return;
+  }
+
+  const percent = Math.round((displayIndex / total) * 100);
+  const totalPages = Math.max(1, Math.ceil(total / WORDS_PER_PAGE));
+  const currentPage = Math.min(totalPages, Math.max(1, Math.ceil(displayIndex / WORDS_PER_PAGE)));
+  wordIndexEl.textContent = `${percent}% / ${currentPage} / ${totalPages} pages`;
+  metaToggle.textContent = "% / pages";
+}
+
+function computeDelay(token) {
+  const base = 60000 / Number(wpmSlider.value || 300);
+  const mult = token?.pause_mult ?? 1.0;
+  return Math.max(40, base * mult);
+}
+
+function clampWpm(value) {
+  return Math.min(1000, Math.max(100, value));
+}
+
+function startRamp() {
+  if (!rampEnabled || rampTimerId) {
+    return;
+  }
+  rampTimerId = window.setInterval(() => {
+    const next = clampWpm(Number(wpmSlider.value || 300) + RAMP_STEP);
+    if (next === Number(wpmSlider.value)) {
+      stopRamp();
+      return;
+    }
+    wpmSlider.value = String(next);
+    updateWpmLabel();
+  }, RAMP_INTERVAL_MS);
+}
+
+function stopRamp() {
+  if (rampTimerId) {
+    window.clearInterval(rampTimerId);
+    rampTimerId = null;
+  }
+}
+
+function scheduleNext() {
+  if (!isPlaying) {
+    return;
+  }
+  if (currentIndex >= tokens.length) {
+    isPlaying = false;
+    setPlayState("Finished");
+    return;
+  }
+
+  const token = tokens[currentIndex];
+  showToken(token);
+  updateMeta();
+  setPlayState("Playing");
+  highlightInputWord(currentIndex);
+
+  // Chain timeouts so the delay can change per word and with WPM updates.
+  const delay = computeDelay(token);
+  timerId = window.setTimeout(() => {
+    currentIndex += 1;
+    scheduleNext();
+  }, delay);
+}
+
+function stopPlayback() {
+  if (timerId) {
+    window.clearTimeout(timerId);
+    timerId = null;
+  }
+  isPlaying = false;
+  inputText.contentEditable = "true";
+  stopRamp();
+}
+
+async function parseText() {
+  const text = inputText.innerText.trim();
+  if (!text) {
+    tokens = [];
+    currentIndex = 0;
+    showToken(null);
+    updateMeta();
+    renderInputContent();
+    setStatus("Please enter some text.");
+    setPlayState("Idle");
+    return false;
+  }
+
+  setStatus("Parsing...");
+  try {
+    const response = await fetch("/api/parse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Parse failed");
+    }
+
+    const data = await response.json();
+    tokens = data.tokens || [];
+    currentIndex = 0;
+    showToken(tokens[0]);
+    updateMeta();
+    inputRawText = inputText.innerText;
+    buildInputSegments(inputRawText);
+    renderInputContent();
+    highlightInputWord(0);
+    setStatus(`Loaded ${tokens.length} words.`);
+    setPlayState("Ready");
+    return tokens.length > 0;
+  } catch (error) {
+    console.error(error);
+    setStatus("Could not parse text. See console for details.");
+    return false;
+  }
+}
+
+function jumpWords(delta) {
+  if (tokens.length === 0) {
+    return;
+  }
+  currentIndex = Math.min(Math.max(0, currentIndex + delta), tokens.length - 1);
+  showToken(tokens[currentIndex]);
+  updateMeta();
+  highlightInputWord(currentIndex);
+  if (isPlaying) {
+    stopPlayback();
+    isPlaying = true;
+    inputText.contentEditable = "false";
+    scheduleNext();
+  }
+}
+
+loadSample.addEventListener("click", () => {
+  inputText.innerText = sampleText;
+  setStatus("Sample loaded.");
+  inputText.dispatchEvent(new Event("input"));
+});
+
+loadEpub.addEventListener("click", async () => {
+  const file = epubFile.files[0];
+  if (!file) {
+    setStatus("Choose an EPUB file first.");
+    return;
+  }
+  rampEnabled = true;
+  stopRamp();
+  setStatus("Importing EPUB...");
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch("/api/epub", {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) {
+      const errorPayload = await response.json();
+      throw new Error(errorPayload.detail || "EPUB import failed");
+    }
+    const data = await response.json();
+    inputText.innerText = data.text || "";
+    await parseText();
+  } catch (error) {
+    console.error(error);
+    setStatus(`Could not import EPUB: ${error.message}`);
+  }
+});
+
+inputText.addEventListener("input", () => {
+  stopPlayback();
+  tokens = [];
+  currentIndex = 0;
+  showToken(null);
+  updateMeta();
+  inputRawText = inputText.innerText;
+  buildInputSegments(inputRawText);
+  renderInputContent();
+  rampEnabled = true;
+  setStatus("Text changed. Press Play to parse again.");
+  setPlayState("Idle");
+});
+
+wpmSlider.addEventListener("input", updateWpmLabel);
+
+playButton.addEventListener("click", async () => {
+  if (isPlaying) {
+    return;
+  }
+  if (tokens.length === 0) {
+    const parsed = await parseText();
+    if (!parsed) {
+      return;
+    }
+  }
+  isPlaying = true;
+  inputText.contentEditable = "false";
+  startRamp();
+  scheduleNext();
+});
+
+pauseButton.addEventListener("click", () => {
+  if (!isPlaying) {
+    return;
+  }
+  stopPlayback();
+  setPlayState("Paused");
+  highlightInputWord(currentIndex);
+});
+
+resumeButton.addEventListener("click", () => {
+  if (isPlaying || tokens.length === 0) {
+    return;
+  }
+  isPlaying = true;
+  inputText.contentEditable = "false";
+  startRamp();
+  scheduleNext();
+});
+
+restartButton.addEventListener("click", () => {
+  stopPlayback();
+  currentIndex = 0;
+  showToken(tokens[0]);
+  updateMeta();
+  highlightInputWord(0);
+  setPlayState("Restarted");
+});
+
+back10Button.addEventListener("click", () => jumpWords(-10));
+forward10Button.addEventListener("click", () => jumpWords(10));
+
+stableButton.addEventListener("click", () => {
+  rampEnabled = false;
+  stopRamp();
+  setStatus("Speed stabilized. Press Play to keep current WPM.");
+});
+
+metaToggle.addEventListener("click", () => {
+  metaMode = metaMode === "words" ? "percent" : "words";
+  updateMeta();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.ctrlKey && event.key.toLowerCase() === "k") {
+    event.preventDefault();
+    rampEnabled = false;
+    stopRamp();
+    setStatus("Speed stabilized via Ctrl+K.");
+  }
+});
+
+updateWpmLabel();
+updateMeta();
+showToken(null);
+inputRawText = inputText.innerText;
+buildInputSegments(inputRawText);
+renderInputContent();
