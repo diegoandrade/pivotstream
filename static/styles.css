@@ -24,7 +24,7 @@ body {
 .page {
   max-width: 980px;
   margin: 0 auto;
-  padding: 28px 24px 340px;
+  padding: 28px 24px 56px;
   display: grid;
   gap: 24px;
 }
@@ -170,17 +170,10 @@ button.ghost {
 }
 
 .viewer {
-  display: flex;
-  flex-direction: column-reverse;
+  display: grid;
   gap: 16px;
   align-items: center;
-  position: fixed;
-  left: 50%;
-  bottom: 20px;
-  transform: translateX(-50%);
-  width: min(980px, calc(100vw - 32px));
-  margin: 0;
-  z-index: 20;
+  justify-items: center;
 }
 
 .focus-window {
@@ -284,15 +277,6 @@ button.ghost {
 }
 
 @media (max-width: 600px) {
-  .page {
-    padding-bottom: 300px;
-  }
-
-  .viewer {
-    bottom: 12px;
-    width: calc(100vw - 24px);
-  }
-
   .slider-row {
     flex-direction: column;
     align-items: flex-start;

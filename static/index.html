@@ -13,20 +13,6 @@
         <p>RSVP reader with a fixed Optimal Recognition Point. Paste text, set your speed, and read without moving your eyes.</p>
       </header>
 
-      <section class="panel viewer">
-        <div class="focus-window" aria-live="polite" aria-atomic="true">
-          <span class="center-guide" aria-hidden="true"></span>
-          <span id="left" class="left"></span>
-          <span id="pivot" class="pivot"></span>
-          <span id="right" class="right"></span>
-        </div>
-        <div class="meta">
-          <span id="wordIndex">0 / 0</span>
-          <button id="metaToggle" class="ghost meta-toggle" type="button">Words</button>
-          <span id="playState">Idle</span>
-        </div>
-      </section>
-
       <section class="panel">
         <div class="controls">
           <div class="slider-group">
@@ -68,6 +54,20 @@
           </label>
           <button id="loadEpub" class="ghost">Load EPUB</button>
           <div class="status" id="parseStatus"></div>
+        </div>
+      </section>
+
+      <section class="panel viewer">
+        <div class="focus-window" aria-live="polite" aria-atomic="true">
+          <span class="center-guide" aria-hidden="true"></span>
+          <span id="left" class="left"></span>
+          <span id="pivot" class="pivot"></span>
+          <span id="right" class="right"></span>
+        </div>
+        <div class="meta">
+          <span id="wordIndex">0 / 0</span>
+          <button id="metaToggle" class="ghost meta-toggle" type="button">Words</button>
+          <span id="playState">Idle</span>
         </div>
       </section>
     </div>
