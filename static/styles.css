@@ -294,11 +294,17 @@ button.ghost {
 }
 
 .file span {
-  border: 1px solid var(--border);
+  border: 1px solid var(--ink);
   border-radius: 999px;
   padding: 8px 14px;
   font-size: 0.9rem;
-  background: #fff;
+  background: var(--ink);
+  color: #fff;
+}
+
+.file:focus-within span {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 
 .buttons {
