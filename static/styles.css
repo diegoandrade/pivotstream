@@ -8,6 +8,7 @@
   --crosshair: rgba(240, 240, 240, 0.75);
   --border: #e2dfd6;
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  --focus: #1f5cff;
 }
 
 * {
@@ -19,6 +20,7 @@ body {
   font-family: "Garamond", "Times New Roman", serif;
   color: var(--ink);
   background: radial-gradient(circle at top, #fff9ec 0%, var(--bg) 60%);
+  line-height: 1.6;
 }
 
 .page {
@@ -91,6 +93,7 @@ body {
 .hero h1 {
   font-size: 2.6rem;
   margin: 0 0 8px;
+  line-height: 1.1;
 }
 
 .hero p {
@@ -98,6 +101,7 @@ body {
   color: var(--muted);
   font-size: 1.05rem;
   max-width: 680px;
+  line-height: 1.5;
 }
 
 .panel {
@@ -119,7 +123,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 14px;
-  font-size: 1rem;
+  font-size: 1.02rem;
   font-family: "Garamond", "Times New Roman", serif;
   resize: vertical;
   background: #fffaf0;
@@ -151,6 +155,25 @@ body {
   gap: 12px;
   margin-top: 12px;
   flex-wrap: wrap;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+
+.is-hidden {
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .status {
@@ -189,6 +212,14 @@ button {
   color: #fff;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   min-height: 44px;
+}
+
+button:focus-visible,
+input[type="range"]:focus-visible,
+.text-input:focus-visible,
+.chapter-item:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 
 button:hover {
@@ -242,7 +273,7 @@ button.ghost {
   grid-template-columns: 1fr 1ch 1fr;
   align-items: baseline;
   font-family: "Garamond", "Times New Roman", serif;
-  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
   padding: 26px 24px;
   border-radius: 18px;
   border: 1px solid var(--border);
@@ -336,6 +367,49 @@ button.ghost {
   font-size: 0.85rem;
 }
 
+.shortcuts-dialog {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px 20px;
+  box-shadow: var(--shadow);
+  max-width: 420px;
+  width: calc(100% - 32px);
+}
+
+.shortcuts-dialog::backdrop {
+  background: rgba(28, 27, 26, 0.4);
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.shortcuts-header h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.shortcuts-list {
+  display: grid;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.shortcuts-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.shortcuts-list span:first-child {
+  font-weight: 600;
+  color: var(--ink);
+}
+
 @media (max-width: 600px) {
   .layout {
     grid-template-columns: 1fr;
@@ -353,6 +427,20 @@ button.ghost {
   .buttons {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    order: 2;
+  }
+
+  .main-stack {
+    order: 1;
   }
 }
 

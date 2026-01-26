@@ -7,8 +7,15 @@ const loadEpub = document.getElementById("loadEpub");
 const pdfFile = document.getElementById("pdfFile");
 const loadPdf = document.getElementById("loadPdf");
 const parseStatus = document.getElementById("parseStatus");
+const parseSpinner = document.getElementById("parseSpinner");
 const chapterList = document.getElementById("chapterList");
 const chapterStatus = document.getElementById("chapterStatus");
+const chapterLabel = document.getElementById("chapterLabel");
+const chaptersPanel = document.querySelector(".chapters-panel");
+const chapterDivider = document.querySelector(".panel-divider");
+const shortcutsButton = document.getElementById("shortcuts");
+const shortcutsDialog = document.getElementById("shortcutsDialog");
+const shortcutsClose = document.getElementById("shortcutsClose");
 const wpmSlider = document.getElementById("wpm");
 const wpmValue = document.getElementById("wpmValue");
 const playButton = document.getElementById("play");
@@ -37,6 +44,9 @@ let rampEnabled = true;
 let metaMode = "words";
 let chapters = [];
 let activeChapterIndex = null;
+let inputDebounceId = null;
+
+const INPUT_DEBOUNCE_MS = 150;
 
 const RAMP_INTERVAL_MS = 10000;
 const RAMP_STEP = 20;
@@ -45,6 +55,25 @@ const WORDS_PER_PAGE = 300;
 
 function setStatus(message) {
   parseStatus.textContent = message;
+}
+
+function setLoading(isLoading, message) {
+  if (message) {
+    setStatus(message);
+  }
+  if (parseSpinner) {
+    parseSpinner.classList.toggle("is-hidden", !isLoading);
+  }
+  [loadEpub, loadPdf, loadSample].forEach((button) => {
+    if (button) {
+      button.disabled = isLoading;
+    }
+  });
+  [epubFile, pdfFile].forEach((input) => {
+    if (input) {
+      input.disabled = isLoading;
+    }
+  });
 }
 
 function setPlayState(message) {
@@ -61,13 +90,58 @@ function setChapterStatus(message) {
   }
 }
 
+function setChapterPanelMode(mode, message) {
+  if (!chaptersPanel) {
+    return;
+  }
+  const showList = mode === "epub";
+  if (chapterList) {
+    chapterList.classList.toggle("is-hidden", !showList);
+  }
+  if (chapterLabel) {
+    chapterLabel.textContent = mode === "pdf" ? "Pages" : "Chapters";
+  }
+  chaptersPanel.classList.toggle("is-hidden", mode === "none");
+  if (chapterDivider) {
+    chapterDivider.classList.toggle("is-hidden", mode === "none");
+  }
+  if (message) {
+    setChapterStatus(message);
+  }
+}
+
+function isEditableTarget(target) {
+  if (!target) {
+    return false;
+  }
+  if (target === inputText || inputText.contains(target)) {
+    return true;
+  }
+  return (
+    target.isContentEditable ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
+  );
+}
+
+function openShortcuts() {
+  if (shortcutsDialog && !shortcutsDialog.open) {
+    shortcutsDialog.showModal();
+  }
+}
+
+function closeShortcuts() {
+  if (shortcutsDialog && shortcutsDialog.open) {
+    shortcutsDialog.close();
+  }
+}
+
 function clearChapters() {
   chapters = [];
   activeChapterIndex = null;
   if (chapterList) {
     chapterList.innerHTML = "";
   }
-  setChapterStatus("No chapters loaded.");
+  setChapterPanelMode("none", "No chapters loaded.");
 }
 
 function setActiveChapter(index) {
@@ -87,10 +161,10 @@ function renderChapters() {
   }
   chapterList.innerHTML = "";
   if (!chapters.length) {
-    setChapterStatus("No chapters loaded.");
+    setChapterPanelMode("none", "No chapters loaded.");
     return;
   }
-  setChapterStatus(`${chapters.length} chapters`);
+  setChapterPanelMode("epub", `${chapters.length} chapters`);
   chapters.forEach((chapter, index) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -360,6 +434,16 @@ loadSample.addEventListener("click", () => {
   inputText.dispatchEvent(new Event("input"));
 });
 
+if (shortcutsButton && shortcutsDialog && shortcutsClose) {
+  shortcutsButton.addEventListener("click", openShortcuts);
+  shortcutsClose.addEventListener("click", closeShortcuts);
+  shortcutsDialog.addEventListener("click", (event) => {
+    if (event.target === shortcutsDialog) {
+      closeShortcuts();
+    }
+  });
+}
+
 loadEpub.addEventListener("click", async () => {
   const file = epubFile.files[0];
   if (!file) {
@@ -368,7 +452,7 @@ loadEpub.addEventListener("click", async () => {
   }
   rampEnabled = true;
   stopRamp();
-  setStatus("Importing EPUB...");
+  setLoading(true, "Importing EPUB...");
   try {
     const formData = new FormData();
     formData.append("file", file);
@@ -388,9 +472,10 @@ loadEpub.addEventListener("click", async () => {
     if (parsed && chapters.length) {
       setActiveChapter(0);
     }
+    setLoading(false);
   } catch (error) {
     console.error(error);
-    setStatus(`Could not import EPUB: ${error.message}`);
+    setLoading(false, `Could not import EPUB: ${error.message}`);
   }
 });
 
@@ -403,7 +488,7 @@ if (loadPdf && pdfFile) {
     }
     rampEnabled = true;
     stopRamp();
-    setStatus("Importing PDF...");
+    setLoading(true, "Importing PDF...");
     clearChapters();
     try {
       const formData = new FormData();
@@ -416,16 +501,17 @@ if (loadPdf && pdfFile) {
         const errorPayload = await response.json();
         throw new Error(errorPayload.detail || "PDF import failed");
       }
-      const data = await response.json();
-      inputText.innerText = data.text || "";
-      const parsed = await parseText();
-      if (parsed && Number.isFinite(data.pages)) {
-        setChapterStatus(`PDF pages: ${data.pages}`);
-      }
-    } catch (error) {
-      console.error(error);
-      setStatus(`Could not import PDF: ${error.message}`);
+    const data = await response.json();
+    inputText.innerText = data.text || "";
+    const parsed = await parseText();
+    if (parsed && Number.isFinite(data.pages)) {
+      setChapterPanelMode("pdf", `PDF pages: ${data.pages}`);
     }
+    setLoading(false);
+  } catch (error) {
+    console.error(error);
+    setLoading(false, `Could not import PDF: ${error.message}`);
+  }
   });
 }
 
@@ -437,11 +523,17 @@ inputText.addEventListener("input", () => {
   updateMeta();
   clearChapters();
   inputRawText = inputText.innerText;
-  buildInputSegments(inputRawText);
-  renderInputContent();
   rampEnabled = true;
-  setStatus("Text changed. Press Play to parse again.");
   setPlayState("Idle");
+  if (inputDebounceId) {
+    window.clearTimeout(inputDebounceId);
+  }
+  inputDebounceId = window.setTimeout(() => {
+    buildInputSegments(inputRawText);
+    renderInputContent();
+    setStatus("Text changed. Press Play to parse again.");
+    inputDebounceId = null;
+  }, INPUT_DEBOUNCE_MS);
 });
 
 wpmSlider.addEventListener("input", updateWpmLabel);
@@ -505,11 +597,60 @@ metaToggle.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (shortcutsDialog?.open && event.key === "Escape") {
+    closeShortcuts();
+    return;
+  }
+  if (isEditableTarget(event.target)) {
+    return;
+  }
   if (event.ctrlKey && event.key.toLowerCase() === "k") {
     event.preventDefault();
     rampEnabled = false;
     stopRamp();
     setStatus("Speed stabilized via Ctrl+K.");
+    return;
+  }
+  const key = event.key.toLowerCase();
+  if (key === " ") {
+    event.preventDefault();
+    if (isPlaying) {
+      stopPlayback();
+      setPlayState("Paused");
+      highlightInputWord(currentIndex);
+    } else {
+      playButton.click();
+    }
+    return;
+  }
+  if (key === "r") {
+    event.preventDefault();
+    restartButton.click();
+    return;
+  }
+  if (key === "j") {
+    event.preventDefault();
+    back10Button.click();
+    return;
+  }
+  if (key === "l") {
+    event.preventDefault();
+    forward10Button.click();
+    return;
+  }
+  if (key === "c") {
+    event.preventDefault();
+    metaToggle.click();
+    return;
+  }
+  if (key === "s") {
+    event.preventDefault();
+    stableButton.click();
+    return;
+  }
+  if (key === "?") {
+    event.preventDefault();
+    openShortcuts();
   }
 });
 

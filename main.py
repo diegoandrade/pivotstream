@@ -5,6 +5,7 @@ import io
 import math
 import re
 import zipfile
+import asyncio
 from html.parser import HTMLParser
 from pathlib import PurePosixPath
 from typing import List
@@ -17,6 +18,7 @@ from pypdf import PdfReader
 from pydantic import BaseModel
 
 app = FastAPI(title="PivotStream Studio")
+IMPORT_TIMEOUT_SECONDS = 15
 
 
 class ParseRequest(BaseModel):
@@ -423,9 +425,15 @@ def _extract_epub_data(data: bytes) -> tuple[str, List[dict]]:
                 html_bytes = zf.read(zip_path)
             except KeyError:
                 continue
-            html_source = html_bytes.decode("utf-8", errors="ignore")
-            text = _html_to_text(html_source)
-            title = _extract_title(html_source)
+            try:
+                html_source = html_bytes.decode("utf-8", errors="ignore")
+            except UnicodeDecodeError:
+                html_source = html_bytes.decode("latin-1", errors="ignore")
+            try:
+                text = _html_to_text(html_source)
+                title = _extract_title(html_source)
+            except Exception:
+                continue
             spine_items.append(
                 {
                     "href": href,
@@ -483,7 +491,10 @@ def _extract_pdf_data(data: bytes) -> tuple[str, int]:
 
     chunks: List[str] = []
     for page in reader.pages:
-        text = page.extract_text() or ""
+        try:
+            text = page.extract_text() or ""
+        except Exception:
+            continue
         if text:
             chunks.append(text)
 
@@ -521,11 +532,18 @@ async def epub_endpoint(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File is empty")
 
     try:
-        text, chapters = _extract_epub_data(data)
+        text, chapters = await asyncio.wait_for(
+            asyncio.to_thread(_extract_epub_data, data),
+            timeout=IMPORT_TIMEOUT_SECONDS,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(status_code=408, detail="EPUB import timed out") from exc
     except zipfile.BadZipFile as exc:
         raise HTTPException(status_code=400, detail="Invalid EPUB archive") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="EPUB import failed") from exc
 
     return {"text": text, "chapters": chapters}
 
@@ -542,9 +560,16 @@ async def pdf_endpoint(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File is empty")
 
     try:
-        text, pages = _extract_pdf_data(data)
+        text, pages = await asyncio.wait_for(
+            asyncio.to_thread(_extract_pdf_data, data),
+            timeout=IMPORT_TIMEOUT_SECONDS,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(status_code=408, detail="PDF import timed out") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="PDF import failed") from exc
 
     return {"text": text, "pages": pages}
 

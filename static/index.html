@@ -37,6 +37,7 @@
               <span>Choose PDF</span>
             </label>
             <button id="loadPdf" class="ghost">Load PDF</button>
+            <span id="parseSpinner" class="spinner is-hidden" aria-hidden="true"></span>
             <div class="status" id="parseStatus"></div>
           </div>
         </section>
@@ -61,32 +62,48 @@
             <div class="label">Speed</div>
             <div class="controls">
               <div class="slider-row">
-                <input id="wpm" type="range" min="100" max="800" step="10" value="300" />
-                <span id="wpmValue">300 WPM</span>
+                <input id="wpm" type="range" min="100" max="800" step="10" value="300" aria-label="Words per minute" />
+                <span id="wpmValue" aria-live="polite">300 WPM</span>
               </div>
               <div class="buttons">
-                <button id="play">Play</button>
-                <button id="pause" class="ghost">Pause</button>
-                <button id="resume" class="ghost">Resume</button>
-                <button id="restart" class="ghost">Restart</button>
-                <button id="stable" class="ghost">Stable</button>
+                <button id="play" aria-label="Play">Play</button>
+                <button id="pause" class="ghost" aria-label="Pause">Pause</button>
+                <button id="resume" class="ghost" aria-label="Resume">Resume</button>
+                <button id="restart" class="ghost" aria-label="Restart">Restart</button>
+                <button id="stable" class="ghost" aria-label="Stabilize speed">Stable</button>
               </div>
               <div class="buttons">
-                <button id="back10" class="ghost">&larr; 10 words</button>
-                <button id="forward10" class="ghost">10 words &rarr;</button>
+                <button id="back10" class="ghost" aria-label="Back 10 words">&larr; 10 words</button>
+                <button id="forward10" class="ghost" aria-label="Forward 10 words">10 words &rarr;</button>
               </div>
+              <button id="shortcuts" class="ghost" type="button" aria-haspopup="dialog">Shortcuts</button>
             </div>
           </div>
 
           <div class="panel-divider" role="presentation"></div>
 
           <div class="chapters-panel">
-            <div class="label">Chapters</div>
+            <div class="label" id="chapterLabel">Chapters</div>
             <div id="chapterList" class="chapter-list"></div>
             <div class="status" id="chapterStatus">No chapters loaded.</div>
           </div>
         </section>
       </div>
+
+      <dialog id="shortcutsDialog" class="shortcuts-dialog" aria-labelledby="shortcutsTitle">
+        <div class="shortcuts-header">
+          <h2 id="shortcutsTitle">Keyboard shortcuts</h2>
+          <button id="shortcutsClose" class="ghost" type="button" aria-label="Close shortcuts">Close</button>
+        </div>
+        <div class="shortcuts-list">
+          <div><span>Space</span><span>Play / pause</span></div>
+          <div><span>R</span><span>Restart</span></div>
+          <div><span>J / L</span><span>Back / forward 10 words</span></div>
+          <div><span>C</span><span>Toggle words / %</span></div>
+          <div><span>S</span><span>Stabilize speed</span></div>
+          <div><span>?</span><span>Open shortcuts</span></div>
+        </div>
+      </dialog>
     </div>
 
     <script src="app.js?v=20260126"></script>
