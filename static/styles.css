@@ -64,19 +64,29 @@ body {
   gap: 8px;
   max-height: 320px;
   overflow: auto;
-  padding-right: 4px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: #fffaf0;
+  scrollbar-gutter: stable;
 }
 
 .chapter-item {
-  border-radius: 12px;
+  width: 100%;
+  border-radius: 999px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: transparent;
   color: var(--ink);
-  padding: 10px 12px;
+  padding: 10px 16px;
   font-size: 0.95rem;
+  line-height: 1.4;
   text-align: left;
-  min-height: 0;
+  font-family: "Garamond", "Times New Roman", serif;
+  min-height: 40px;
   box-shadow: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chapter-item:hover {
@@ -86,8 +96,10 @@ body {
 }
 
 .chapter-item.active {
-  background: #f3d9b8;
-  border-color: #e5c7a4;
+  background: #1c1b1a;
+  color: #fff;
+  border-color: #1c1b1a;
+  box-shadow: 0 0 0 2px var(--focus);
 }
 
 .hero h1 {
@@ -212,6 +224,15 @@ button {
   color: #fff;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   min-height: 44px;
+}
+
+.controls-panel button {
+  font-family: "Garamond", "Times New Roman", serif;
+  font-size: 0.95rem;
+}
+
+.controls-panel .slider-row span {
+  font-size: 0.95rem;
 }
 
 button:focus-visible,
