@@ -506,21 +506,114 @@ def _extract_pdf_data(data: bytes) -> tuple[str, int, List[dict]]:
 
 
 def _extract_pdf_sections(text: str) -> List[dict]:
-    pattern = re.compile(r"^(?P<num>\d{1,3})(?:\.(?P<sub>\d{1,3}))?(?:[.)])?\s+(?P<title>.+)$")
+    numeric_pattern = re.compile(
+        r"^(?P<label>\d{1,3}(?:\.\d{1,3}){0,2})(?:[.)\-:])?\s*(?P<title>[A-Za-z].+)$"
+    )
+    roman_pattern = re.compile(
+        r"^(?P<label>[IVXLCDM]{1,10})\.\s+(?P<title>[A-Za-z].+)$",
+        re.IGNORECASE,
+    )
+    alpha_pattern = re.compile(
+        r"^(?P<label>[A-Za-z])(?:[.)\-:])\s*(?P<title>[A-Za-z].+)$"
+    )
     sections: List[dict] = []
     seen: set[str] = set()
     token_index = 0
+    max_major = 99
+    max_sub = 99
+    unit_noise = re.compile(
+        r"\b(?:kb|mb|gb|tb|pb|%|hz|khz|mhz|ghz|w|kw|mw|v|kv|a|ma|ms|s|sec|secs|min|mins|hr|hrs|kg|g|mg|cm|mm|m2|m\^2|m3|m\^3)\b",
+        re.IGNORECASE,
+    )
+
+    def is_probable_title(title: str) -> bool:
+        if not title:
+            return False
+        if not re.search(r"[A-Za-z]", title):
+            return False
+        return True
+
+    def roman_to_int(value: str) -> int:
+        mapping = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
+        total = 0
+        prev = 0
+        for char in reversed(value):
+            current = mapping.get(char, 0)
+            if current < prev:
+                total -= current
+            else:
+                total += current
+                prev = current
+        return total
+
     for line in text.splitlines():
         cleaned = _normalize_space(line)
         if not cleaned:
             continue
-        match = pattern.match(cleaned)
+        match = numeric_pattern.match(cleaned)
         if match:
             title = match.group("title").strip()
-            if re.search(r"[A-Za-z]", title):
-                num = match.group("num")
-                sub = match.group("sub")
-                label = f"{num}.{sub}" if sub else num
+            label = match.group("label")
+            parts = label.split(".")
+            numeric_parts: List[int] = []
+            valid = True
+            has_decimal = len(parts) > 1
+            for idx, part in enumerate(parts):
+                if len(part) > 1 and part.startswith("0"):
+                    valid = False
+                    break
+                value = int(part)
+                if value <= 0:
+                    valid = False
+                    break
+                if idx == 0 and value > max_major:
+                    valid = False
+                    break
+                if idx > 0 and value > max_sub:
+                    valid = False
+                    break
+                numeric_parts.append(value)
+            if valid and is_probable_title(title):
+                if has_decimal and unit_noise.search(title):
+                    token_index += _count_tokens(cleaned)
+                    continue
+                normalized_label = ".".join(str(part) for part in numeric_parts)
+                full_title = f"{normalized_label} {title}"
+                if full_title not in seen:
+                    sections.append(
+                        {
+                            "title": full_title,
+                            "start_index": token_index,
+                            "level": 0,
+                        }
+                    )
+                    seen.add(full_title)
+            token_index += _count_tokens(cleaned)
+            continue
+        roman_match = roman_pattern.match(cleaned)
+        if roman_match:
+            roman = roman_match.group("label").upper()
+            title = roman_match.group("title").strip()
+            if is_probable_title(title):
+                value = roman_to_int(roman)
+                if 0 < value <= max_major:
+                    full_title = f"{roman} {title}"
+                    if full_title not in seen:
+                        sections.append(
+                            {
+                                "title": full_title,
+                                "start_index": token_index,
+                                "level": 0,
+                            }
+                        )
+                        seen.add(full_title)
+            token_index += _count_tokens(cleaned)
+            continue
+        alpha_match = alpha_pattern.match(cleaned)
+        if alpha_match:
+            label = alpha_match.group("label").upper()
+            title = alpha_match.group("title").strip()
+            if is_probable_title(title):
                 full_title = f"{label} {title}"
                 if full_title not in seen:
                     sections.append(

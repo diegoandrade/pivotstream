@@ -53,6 +53,7 @@ const RAMP_INTERVAL_MS = 10000;
 const RAMP_STEP = 20;
 const RAMP_MAX_WPM = 800;
 const WORDS_PER_PAGE = 300;
+const CHAPTER_LABEL_MAX = 52;
 
 function setStatus(message) {
   parseStatus.textContent = message;
@@ -91,17 +92,26 @@ function setChapterStatus(message) {
   }
 }
 
+function capChapterLabel(text) {
+  if (!text) {
+    return "";
+  }
+  if (text.length <= CHAPTER_LABEL_MAX) {
+    return text;
+  }
+  return `${text.slice(0, CHAPTER_LABEL_MAX - 3).trimEnd()}...`;
+}
+
 function setChapterPanelMode(mode, message) {
   if (!chaptersPanel) {
     return;
   }
-  const showList = mode === "epub" || mode === "sections";
+  const showList = mode === "epub";
   if (chapterList) {
     chapterList.classList.toggle("is-hidden", !showList);
   }
   if (chapterLabel) {
-    chapterLabel.textContent =
-      mode === "pdf" ? "Pages" : mode === "sections" ? "Sections" : "Chapters";
+    chapterLabel.textContent = mode === "pdf" ? "Pages" : "Chapters";
   }
   chaptersPanel.classList.toggle("is-hidden", mode === "none");
   if (chapterDivider) {
@@ -164,21 +174,18 @@ function renderChapters() {
   }
   chapterList.innerHTML = "";
   if (!chapters.length) {
-    const emptyLabel =
-      chapterMode === "sections" ? "No sections found." : "No chapters loaded.";
-    setChapterPanelMode(chapterMode === "sections" ? "sections" : "none", emptyLabel);
+    setChapterPanelMode("none", "No chapters loaded.");
     return;
   }
-  const label =
-    chapterMode === "sections"
-      ? `${chapters.length} sections`
-      : `${chapters.length} chapters`;
-  setChapterPanelMode(chapterMode === "sections" ? "sections" : "epub", label);
+  const label = `${chapters.length} chapters`;
+  setChapterPanelMode("epub", label);
   chapters.forEach((chapter, index) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "chapter-item";
-    button.textContent = chapter.title || `Chapter ${index + 1}`;
+    const rawTitle = chapter.title || `Chapter ${index + 1}`;
+    button.textContent = capChapterLabel(rawTitle);
+    button.title = rawTitle;
     if (Number.isFinite(chapter.level) && chapter.level > 0) {
       button.style.paddingLeft = `${12 + chapter.level * 16}px`;
     }
@@ -517,7 +524,7 @@ if (loadPdf && pdfFile) {
     const sections = Array.isArray(data.chapters) ? data.chapters : [];
     if (sections.length) {
       chapters = sections;
-      chapterMode = "sections";
+      chapterMode = "epub";
       renderChapters();
       if (parsed) {
         setActiveChapter(0);

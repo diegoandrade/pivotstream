@@ -4,7 +4,7 @@ import zipfile
 import pytest
 from pypdf import PdfWriter
 
-from main import _extract_epub_data, _extract_pdf_data
+from main import _extract_epub_data, _extract_pdf_data, _extract_pdf_sections
 
 
 CONTAINER_XML = """<?xml version="1.0"?>
@@ -79,3 +79,34 @@ def test_extract_pdf_empty_text_raises():
 def test_extract_pdf_invalid_raises():
     with pytest.raises(ValueError, match="Invalid PDF"):
         _extract_pdf_data(b"not a pdf")
+
+
+def test_extract_pdf_sections_filters_noise():
+    text = """
+2.1 Problem Statement
+1.1. Requirements definition
+5. XML-CAD data generation step
+IV. Conclusion and future works
+iv. lower roman conclusion
+A. Appendix
+V. Methods
+II. Results
+1.3.Functional architecture definition
+136.01 MB are adopted
+0 to 1 with an interval
+I. Introduction
+"""
+    sections = _extract_pdf_sections(text)
+    titles = [section["title"] for section in sections]
+    assert "2.1 Problem Statement" in titles
+    assert "1.1 Requirements definition" in titles
+    assert "5 XML-CAD data generation step" in titles
+    assert "IV Conclusion and future works" in titles
+    assert "IV lower roman conclusion" in titles
+    assert "A Appendix" in titles
+    assert "V Methods" in titles
+    assert "II Results" in titles
+    assert "1.3 Functional architecture definition" in titles
+    assert "I Introduction" in titles
+    assert not any("136.01" in title for title in titles)
+    assert not any(title.startswith("0 ") for title in titles)

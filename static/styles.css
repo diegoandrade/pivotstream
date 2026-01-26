@@ -38,6 +38,10 @@ body {
   align-items: start;
 }
 
+.layout > * {
+  min-width: 0;
+}
+
 .main-stack {
   display: grid;
   gap: 24px;
@@ -46,10 +50,25 @@ body {
 .side-panel {
   display: grid;
   gap: 18px;
+  width: 100%;
+  min-width: 0;
+  align-content: start;
+  grid-auto-rows: min-content;
+}
+
+.controls-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+.chapters-panel {
+  width: 100%;
+  min-width: 0;
 }
 
 .controls-panel .buttons {
   justify-content: flex-start;
+  max-width: 100%;
 }
 
 .panel-divider {
@@ -69,6 +88,8 @@ body {
   border: 1px solid var(--border);
   background: #fffaf0;
   scrollbar-gutter: stable;
+  width: 100%;
+  max-width: 100%;
 }
 
 .chapter-item {
@@ -197,6 +218,8 @@ body {
 .controls {
   display: grid;
   gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .slider-group {
@@ -208,10 +231,14 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
 input[type="range"] {
   width: 220px;
+  flex: 1 1 160px;
+  min-width: 160px;
 }
 
 button {
@@ -278,6 +305,7 @@ button.ghost {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  max-width: 100%;
 }
 
 .viewer {
