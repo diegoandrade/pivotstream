@@ -12,8 +12,6 @@
 ## Delighter Path (Extended polish)
 - **Weeks 4–8:** Advanced reading controls, richer library/chapter navigation, offline support, better typography/animations, and deeper analytics.
 
----
-
 ## Phase 0 — Baseline Audit & Planning (Week 1)
 **Goals**
 - Establish baseline metrics and a production checklist.
@@ -33,8 +31,6 @@
 
 **Demo Criteria**
 - Documented baseline metrics + prioritized backlog.
-
----
 
 ## Phase 1 — Core Stability & Reliability (Weeks 1–2)
 **Goals**
@@ -63,8 +59,6 @@
 **Demo Criteria**
 - Import a large EPUB and PDF live; playback starts immediately.
 
----
-
 ## Phase 2 — UX/UI Polish & Accessibility (Weeks 2–3)
 **Goals**
 - Make the UI feel cohesive and usable for long reading sessions.
@@ -90,8 +84,6 @@
 **Demo Criteria**
 - Live run on mobile + desktop with full keyboard control.
 
----
-
 ## Phase 3 — Testing & Release Hardening (Weeks 3–4)
 **Goals**
 - Prevent regressions and ship confidently.
@@ -115,8 +107,6 @@
 **Demo Criteria**
 - CI pipeline runs on sample EPUB/PDF assets.
 
----
-
 ## Phase 4 — Deployment & Documentation (Weeks 4–5)
 **Goals**
 - Production deploy with clear docs and operational runbooks.
@@ -139,8 +129,6 @@
 
 **Demo Criteria**
 - Production instance running with sample imports.
-
----
 
 ## Phase 5 — Delight & Advanced Features (Weeks 5–8)
 **Goals**
@@ -168,8 +156,6 @@
 **Demo Criteria**
 - Bookmarks and chapter jumping are reliable across sessions.
 - A PDF without chapters gets auto‑chunked into ~20‑minute segments.
-
----
 
 ## Work Breakdown by Domain
 
@@ -214,8 +200,6 @@
 ### Documentation
 - “Getting Started” and troubleshooting.
 - Feature guide and keyboard shortcuts.
-
----
 
 ## Milestone Summary (By Week)
 - **Week 1:** Baseline audit + reliability fixes.
