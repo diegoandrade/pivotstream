@@ -13,49 +13,59 @@
         <p>RSVP reader with a fixed Optimal Recognition Point. Paste text, set your speed, and read without moving your eyes.</p>
       </header>
 
-      <section class="panel">
-        <div class="controls">
-          <div class="slider-group">
-            <label class="label" for="wpm">Speed</label>
-            <div class="slider-row">
-              <input id="wpm" type="range" min="100" max="800" step="10" value="300" />
-              <span id="wpmValue">300 WPM</span>
-            </div>
+      <div class="panel-grid">
+        <section class="panel input-panel">
+          <label class="label" for="inputText">Text input</label>
+          <div
+            id="inputText"
+            class="text-input"
+            contenteditable="true"
+            role="textbox"
+            aria-multiline="true"
+            data-placeholder="Paste or type text here..."
+          ></div>
+          <div class="row">
+            <button id="loadSample" class="ghost">Load sample text</button>
+            <label class="file">
+              <input id="epubFile" type="file" accept=".epub" />
+              <span>Choose EPUB</span>
+            </label>
+            <button id="loadEpub" class="ghost">Load EPUB</button>
+            <div class="status" id="parseStatus"></div>
           </div>
-          <div class="buttons">
-            <button id="play">Play</button>
-            <button id="pause" class="ghost">Pause</button>
-            <button id="resume" class="ghost">Resume</button>
-            <button id="restart" class="ghost">Restart</button>
-            <button id="stable" class="ghost">Stable</button>
-          </div>
-          <div class="buttons">
-            <button id="back10" class="ghost">&larr; 10 words</button>
-            <button id="forward10" class="ghost">10 words &rarr;</button>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="panel">
-        <label class="label" for="inputText">Text input</label>
-        <div
-          id="inputText"
-          class="text-input"
-          contenteditable="true"
-          role="textbox"
-          aria-multiline="true"
-          data-placeholder="Paste or type text here..."
-        ></div>
-        <div class="row">
-          <button id="loadSample" class="ghost">Load sample text</button>
-          <label class="file">
-            <input id="epubFile" type="file" accept=".epub" />
-            <span>Choose EPUB</span>
-          </label>
-          <button id="loadEpub" class="ghost">Load EPUB</button>
-          <div class="status" id="parseStatus"></div>
+        <div class="side-stack">
+          <section class="panel controls-panel">
+            <div class="controls">
+              <div class="slider-group">
+                <label class="label" for="wpm">Speed</label>
+                <div class="slider-row">
+                  <input id="wpm" type="range" min="100" max="800" step="10" value="300" />
+                  <span id="wpmValue">300 WPM</span>
+                </div>
+              </div>
+              <div class="buttons">
+                <button id="play">Play</button>
+                <button id="pause" class="ghost">Pause</button>
+                <button id="resume" class="ghost">Resume</button>
+                <button id="restart" class="ghost">Restart</button>
+                <button id="stable" class="ghost">Stable</button>
+              </div>
+              <div class="buttons">
+                <button id="back10" class="ghost">&larr; 10 words</button>
+                <button id="forward10" class="ghost">10 words &rarr;</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel chapters-panel">
+            <div class="label">Chapters</div>
+            <div id="chapterList" class="chapter-list"></div>
+            <div class="status" id="chapterStatus">No chapters loaded.</div>
+          </section>
         </div>
-      </section>
+      </div>
 
       <section class="panel viewer">
         <div class="focus-window" aria-live="polite" aria-atomic="true">

@@ -29,6 +29,54 @@ body {
   gap: 24px;
 }
 
+.panel-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.side-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.controls-panel .buttons {
+  justify-content: flex-start;
+}
+
+.chapter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.chapter-item {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--ink);
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  text-align: left;
+  min-height: 0;
+  box-shadow: none;
+}
+
+.chapter-item:hover {
+  transform: none;
+  box-shadow: none;
+  background: #fdf4e5;
+}
+
+.chapter-item.active {
+  background: #f3d9b8;
+  border-color: #e5c7a4;
+}
+
 .hero h1 {
   font-size: 2.6rem;
   margin: 0 0 8px;
@@ -277,6 +325,10 @@ button.ghost {
 }
 
 @media (max-width: 600px) {
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+
   .slider-row {
     flex-direction: column;
     align-items: flex-start;

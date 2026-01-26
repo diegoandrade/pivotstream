@@ -5,6 +5,8 @@ const loadSample = document.getElementById("loadSample");
 const epubFile = document.getElementById("epubFile");
 const loadEpub = document.getElementById("loadEpub");
 const parseStatus = document.getElementById("parseStatus");
+const chapterList = document.getElementById("chapterList");
+const chapterStatus = document.getElementById("chapterStatus");
 const wpmSlider = document.getElementById("wpm");
 const wpmValue = document.getElementById("wpmValue");
 const playButton = document.getElementById("play");
@@ -31,6 +33,8 @@ let activeWordEl = null;
 let rampTimerId = null;
 let rampEnabled = true;
 let metaMode = "words";
+let chapters = [];
+let activeChapterIndex = null;
 
 const RAMP_INTERVAL_MS = 10000;
 const RAMP_STEP = 20;
@@ -47,6 +51,55 @@ function setPlayState(message) {
 
 function updateWpmLabel() {
   wpmValue.textContent = `${wpmSlider.value} WPM`;
+}
+
+function setChapterStatus(message) {
+  if (chapterStatus) {
+    chapterStatus.textContent = message;
+  }
+}
+
+function clearChapters() {
+  chapters = [];
+  activeChapterIndex = null;
+  if (chapterList) {
+    chapterList.innerHTML = "";
+  }
+  setChapterStatus("No chapters loaded.");
+}
+
+function setActiveChapter(index) {
+  if (!chapterList) {
+    return;
+  }
+  const items = chapterList.querySelectorAll(".chapter-item");
+  items.forEach((item, itemIndex) => {
+    item.classList.toggle("active", itemIndex === index);
+  });
+  activeChapterIndex = index;
+}
+
+function renderChapters() {
+  if (!chapterList) {
+    return;
+  }
+  chapterList.innerHTML = "";
+  if (!chapters.length) {
+    setChapterStatus("No chapters loaded.");
+    return;
+  }
+  setChapterStatus(`${chapters.length} chapters`);
+  chapters.forEach((chapter, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "chapter-item";
+    button.textContent = chapter.title || `Chapter ${index + 1}`;
+    if (Number.isFinite(chapter.level) && chapter.level > 0) {
+      button.style.paddingLeft = `${12 + chapter.level * 16}px`;
+    }
+    button.addEventListener("click", () => jumpToChapter(index));
+    chapterList.appendChild(button);
+  });
 }
 
 function showToken(token) {
@@ -276,8 +329,31 @@ function jumpWords(delta) {
   }
 }
 
+function jumpToChapter(index) {
+  if (!chapters.length || tokens.length === 0) {
+    return;
+  }
+  const chapter = chapters[index];
+  if (!chapter) {
+    return;
+  }
+  const startIndex = Math.min(Math.max(0, chapter.start_index ?? 0), tokens.length - 1);
+  currentIndex = startIndex;
+  showToken(tokens[currentIndex]);
+  updateMeta();
+  highlightInputWord(currentIndex);
+  setActiveChapter(index);
+  if (isPlaying) {
+    stopPlayback();
+    isPlaying = true;
+    inputText.contentEditable = "false";
+    scheduleNext();
+  }
+}
+
 loadSample.addEventListener("click", () => {
   inputText.innerText = sampleText;
+  clearChapters();
   setStatus("Sample loaded.");
   inputText.dispatchEvent(new Event("input"));
 });
@@ -303,8 +379,13 @@ loadEpub.addEventListener("click", async () => {
       throw new Error(errorPayload.detail || "EPUB import failed");
     }
     const data = await response.json();
+    chapters = Array.isArray(data.chapters) ? data.chapters : [];
     inputText.innerText = data.text || "";
-    await parseText();
+    const parsed = await parseText();
+    renderChapters();
+    if (parsed && chapters.length) {
+      setActiveChapter(0);
+    }
   } catch (error) {
     console.error(error);
     setStatus(`Could not import EPUB: ${error.message}`);
@@ -317,6 +398,7 @@ inputText.addEventListener("input", () => {
   currentIndex = 0;
   showToken(null);
   updateMeta();
+  clearChapters();
   inputRawText = inputText.innerText;
   buildInputSegments(inputRawText);
   renderInputContent();
@@ -400,3 +482,4 @@ showToken(null);
 inputRawText = inputText.innerText;
 buildInputSegments(inputRawText);
 renderInputContent();
+clearChapters();
