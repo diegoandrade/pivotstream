@@ -1,7 +1,10 @@
 :root {
   color-scheme: light;
   --bg: #f9f4e8;
+  --bg-top: #fff9ec;
   --panel: #fffdf5;
+  --panel-soft: #fffaf0;
+  --panel-muted: #f4efe4;
   --ink: #1c1b1a;
   --muted: #6d6a63;
   --accent: #e53935;
@@ -9,6 +12,41 @@
   --border: #e2dfd6;
   --shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
   --focus: #1f5cff;
+  --button-bg: #1c1b1a;
+  --button-ink: #fff;
+  --button-ghost-bg: transparent;
+  --button-ghost-ink: var(--ink);
+  --button-ghost-border: var(--border);
+  --panel-hover: #fdf4e5;
+  --highlight: #f3d9b8;
+  --active-bg: #1c1b1a;
+  --active-ink: #fff;
+  --dialog-backdrop: rgba(28, 27, 26, 0.4);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f0e0c;
+  --bg-top: #1a1916;
+  --panel: #181614;
+  --panel-soft: #141210;
+  --panel-muted: #1f1c19;
+  --ink: #f3efe8;
+  --muted: #b7b0a5;
+  --accent: #f05a55;
+  --crosshair: rgba(255, 255, 255, 0.18);
+  --border: #2b2723;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  --button-bg: #f3efe8;
+  --button-ink: #161411;
+  --button-ghost-bg: transparent;
+  --button-ghost-ink: var(--ink);
+  --button-ghost-border: #3a3530;
+  --panel-hover: #26221e;
+  --highlight: #3a2b1c;
+  --active-bg: #f3efe8;
+  --active-ink: #161411;
+  --dialog-backdrop: rgba(10, 10, 10, 0.65);
 }
 
 * {
@@ -19,7 +57,7 @@ body {
   margin: 0;
   font-family: "Garamond", "Times New Roman", serif;
   color: var(--ink);
-  background: radial-gradient(circle at top, #fff9ec 0%, var(--bg) 60%);
+  background: radial-gradient(circle at top, var(--bg-top) 0%, var(--bg) 60%);
   line-height: 1.6;
 }
 
@@ -86,7 +124,7 @@ body {
   padding: 8px;
   border-radius: 16px;
   border: 1px solid var(--border);
-  background: #fffaf0;
+  background: var(--panel-soft);
   scrollbar-gutter: stable;
   width: 100%;
   max-width: 100%;
@@ -113,20 +151,33 @@ body {
 .chapter-item:hover {
   transform: none;
   box-shadow: none;
-  background: #fdf4e5;
+  background: var(--panel-hover);
 }
 
 .chapter-item.active {
-  background: #1c1b1a;
-  color: #fff;
-  border-color: #1c1b1a;
+  background: var(--active-bg);
+  color: var(--active-ink);
+  border-color: var(--active-bg);
   box-shadow: 0 0 0 2px var(--focus);
+}
+
+.hero-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .hero h1 {
   font-size: 2.6rem;
   margin: 0 0 8px;
   line-height: 1.1;
+}
+
+.theme-toggle {
+  font-size: 0.9rem;
+  padding: 8px 14px;
 }
 
 .hero p {
@@ -159,7 +210,8 @@ body {
   font-size: 1.02rem;
   font-family: "Garamond", "Times New Roman", serif;
   resize: vertical;
-  background: #fffaf0;
+  background: var(--panel-soft);
+  color: var(--ink);
   min-height: 180px;
   max-height: 320px;
   overflow: auto;
@@ -173,11 +225,11 @@ body {
 }
 
 .text-input[contenteditable="false"] {
-  background: #f4efe4;
+  background: var(--panel-muted);
 }
 
 .input-highlight {
-  background: #f3d9b8;
+  background: var(--highlight);
   border-radius: 4px;
   padding: 0 2px;
 }
@@ -247,8 +299,8 @@ button {
   padding: 12px 20px;
   font-size: 1rem;
   cursor: pointer;
-  background: var(--ink);
-  color: #fff;
+  background: var(--button-bg);
+  color: var(--button-ink);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   min-height: 44px;
 }
@@ -276,9 +328,9 @@ button:hover {
 }
 
 button.ghost {
-  background: transparent;
-  color: var(--ink);
-  border: 1px solid var(--border);
+  background: var(--button-ghost-bg);
+  color: var(--button-ghost-ink);
+  border: 1px solid var(--button-ghost-border);
   box-shadow: none;
 }
 
@@ -294,12 +346,12 @@ button.ghost {
 }
 
 .file span {
-  border: 1px solid var(--ink);
+  border: 1px solid var(--button-bg);
   border-radius: 999px;
   padding: 8px 14px;
   font-size: 0.9rem;
-  background: var(--ink);
-  color: #fff;
+  background: var(--button-bg);
+  color: var(--button-ink);
 }
 
 .file:focus-within span {
@@ -431,12 +483,14 @@ button.ghost {
   border-radius: 16px;
   padding: 18px 20px 20px;
   box-shadow: var(--shadow);
+  background: var(--panel);
+  color: var(--ink);
   max-width: 420px;
   width: calc(100% - 32px);
 }
 
 .shortcuts-dialog::backdrop {
-  background: rgba(28, 27, 26, 0.4);
+  background: var(--dialog-backdrop);
 }
 
 .shortcuts-header {

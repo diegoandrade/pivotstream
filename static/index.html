@@ -9,7 +9,10 @@
   <body>
     <div class="page">
       <header class="hero">
-        <h1>PivotStream Studio</h1>
+        <div class="hero-bar">
+          <h1>PivotStream Studio</h1>
+          <button id="themeToggle" class="ghost theme-toggle" type="button" aria-pressed="false">Dark mode</button>
+        </div>
         <p>A friendly Rapid Serial Visual Presentation reader that keeps your focus centered. Paste text, pick a speed, and glide through words without eye strain.</p>
       </header>
 
@@ -62,7 +65,7 @@
             <div class="label">Speed</div>
             <div class="controls">
               <div class="slider-row">
-                <input id="wpm" type="range" min="100" max="800" step="10" value="300" aria-label="Words per minute" />
+                <input id="wpm" type="range" min="100" max="1600" step="10" value="300" aria-label="Words per minute" />
                 <span id="wpmValue" aria-live="polite">300 WPM</span>
               </div>
               <div class="buttons">

@@ -31,6 +31,7 @@ const rightEl = document.getElementById("right");
 const wordIndexEl = document.getElementById("wordIndex");
 const metaToggle = document.getElementById("metaToggle");
 const playStateEl = document.getElementById("playState");
+const themeToggle = document.getElementById("themeToggle");
 
 let tokens = [];
 let currentIndex = 0;
@@ -51,12 +52,26 @@ const INPUT_DEBOUNCE_MS = 150;
 
 const RAMP_INTERVAL_MS = 10000;
 const RAMP_STEP = 20;
-const RAMP_MAX_WPM = 800;
+const RAMP_MAX_WPM = 1600;
 const WORDS_PER_PAGE = 300;
 const CHAPTER_LABEL_MAX = 52;
+const THEME_KEY = "pivotstream-theme";
 
 function setStatus(message) {
   parseStatus.textContent = message;
+}
+
+function preferredTheme() {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  if (themeToggle) {
+    const isDark = theme === "dark";
+    themeToggle.textContent = isDark ? "Light mode" : "Dark mode";
+    themeToggle.setAttribute("aria-pressed", String(isDark));
+  }
 }
 
 function setLoading(isLoading, message) {
@@ -622,6 +637,14 @@ metaToggle.addEventListener("click", () => {
   updateMeta();
 });
 
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(nextTheme);
+    window.localStorage.setItem(THEME_KEY, nextTheme);
+  });
+}
+
 document.addEventListener("keydown", (event) => {
   if (shortcutsDialog?.open && event.key === "Escape") {
     closeShortcuts();
@@ -679,6 +702,9 @@ document.addEventListener("keydown", (event) => {
     openShortcuts();
   }
 });
+
+const storedTheme = window.localStorage.getItem(THEME_KEY);
+applyTheme(storedTheme || preferredTheme());
 
 updateWpmLabel();
 updateMeta();
