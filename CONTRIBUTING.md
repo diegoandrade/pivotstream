@@ -28,17 +28,22 @@ pre-commit run --all-files
 ```
 
 ## Release Process
-Determine the version bump type based on conventional commits since the last tag:
-```bash
-scripts/get_bump_type.sh
-```
+Releases are fully automated via GitHub Actions.
 
-Generate the changelog for a tagged release:
-```bash
-scripts/generate_changelog.sh v1.2.0
-```
+### Manual initiation
+- Run the **Release Automation** workflow (workflow_dispatch).
+- The workflow determines the bump type, calculates the next version, generates the changelog, and opens a PR from `bot/release/vX.Y.Z` with label `release`.
 
-Optional: run bump-type tests:
+### PR updates
+- Any push to `bot/release/*` regenerates the changelog and updates the PR automatically.
+
+### Release creation
+- When the release PR is merged into `main`, the workflow tags the merge commit, creates the GitHub release, and marks it as the latest.
+
+### Local checks (optional)
 ```bash
 scripts/test_bump_type.sh
 ```
+
+### Branch protection
+Branch protection rules (e.g., required PR reviews) must be configured in GitHub repository settings.
