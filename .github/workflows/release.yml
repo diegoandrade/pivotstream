@@ -97,8 +97,10 @@ jobs:
           version="${{ steps.version.outputs.next_version }}"
           branch="bot/release/${version}"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
-            echo "Release branch already exists: $branch"
-            exit 1
+            echo "Release branch already exists: $branch. Reusing it."
+            git fetch origin "$branch"
+            git checkout -B "$branch" "origin/$branch"
+            exit 0
           fi
           git checkout -b "$branch"
 
