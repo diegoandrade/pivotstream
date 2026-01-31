@@ -26,3 +26,19 @@ pip install pre-commit
 pre-commit install
 pre-commit run --all-files
 ```
+
+## Release Process
+Determine the version bump type based on conventional commits since the last tag:
+```bash
+scripts/get_bump_type.sh
+```
+
+Generate the changelog for a tagged release:
+```bash
+scripts/generate_changelog.sh v1.2.0
+```
+
+Optional: run bump-type tests:
+```bash
+scripts/test_bump_type.sh
+```
