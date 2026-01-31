@@ -125,6 +125,9 @@ jobs:
         run: |
           version="${{ steps.version.outputs.next_version }}"
           branch="bot/release/${version}"
+          if ! gh label list --json name --limit 100 | grep -q '"release"'; then
+            gh label create "release" --color "0E8A16" --description "Release pull requests"
+          fi
           if gh pr list --base main --head "$branch" --state open --json number | grep -q number; then
             echo "PR already exists for $branch"
             exit 0
