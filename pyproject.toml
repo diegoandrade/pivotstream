@@ -14,3 +14,8 @@ dependencies = [
   "python-multipart==0.0.21",
   "pypdf==4.3.1",
 ]
+
+[project.optional-dependencies]
+release = [
+  "git-cliff==2.12.0",
+]
