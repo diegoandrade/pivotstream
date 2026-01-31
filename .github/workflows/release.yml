@@ -98,6 +98,7 @@ jobs:
           branch="bot/release/${version}"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
             echo "Release branch already exists: $branch. Reusing it."
+            git reset --hard
             git fetch origin "$branch"
             git checkout -B "$branch" "origin/$branch"
             exit 0
