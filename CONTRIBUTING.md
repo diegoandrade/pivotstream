@@ -91,6 +91,69 @@ Cheat sheet:
 - `perf`: performance improvements
 - `security`: security fixes
 
+## Commit Message Guidelines
+### Overview
+We use conventional commits to automate changelog generation and semantic versioning. This keeps releases consistent and predictable.
+
+### Format Specification
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Type Reference Table
+| Type | Description | Version Bump | Examples |
+|------|-------------|--------------|----------|
+| feat | New feature | MINOR | feat(subprocess): add pdf wrapper |
+| fix | Bug fix | PATCH | fix(core): handle missing config file |
+| docs | Documentation only | NONE | docs: update API reference |
+| chore | Maintenance | NONE | chore(deps): update pytest to 8.0 |
+| ci | CI/CD changes | NONE | ci: add macOS to test matrix |
+| test | Add/update tests | NONE | test(subprocess): add api timeout tests |
+| refactor | Code restructure | NONE | refactor(core): simplify error handling |
+| perf | Performance improvement | PATCH | perf(core): optimize subprocess monitoring |
+| security | Security fix | PATCH | security: sanitize user input |
+
+### Breaking Changes
+- Indicate with `!` after type/scope: `feat(core)!: remove legacy config loader`
+- Or add a footer: `BREAKING CHANGE: remove support for .ini configs`
+- Use for changes that require users to modify code or configuration; these map to a MAJOR version bump.
+
+### Scope Guidelines
+Available scopes:
+- `cli`: command-line interface and flags
+- `core`: core reader logic, timing, parsing, rendering
+- `subprocess`: external process integration and wrappers
+- `docs`: documentation content and structure
+- `ci`: CI/CD workflows and tooling
+- `deps`: dependency updates
+
+Use a scope when the change is localized; omit it for repo-wide changes.
+
+Examples:
+- `feat(cli): add --theme flag`
+- `fix(core): prevent zero-length tokens`
+- `docs: update quickstart`
+
+### Best Practices
+- Use imperative mood ("add", not "added" or "adds")
+- Keep description under 72 characters
+- Reference issues in the footer: `Fixes #123`
+- Use the body to explain **why**, not **what**
+
+### Real Examples (PivotStream)
+- Updating documentation:
+  - `docs: clarify EPUB import steps`
+  - `docs: add troubleshooting for PDF parsing`
+
+### Troubleshooting (pre-commit hooks)
+- **Hook not running**: run `pre-commit install --hook-type commit-msg` and set `git config core.hooksPath .githooks`.
+- **Invalid scope/type**: verify the type and scope are in the allowed lists above.
+- **Short description error**: keep the subject at least 10 characters.
+
 ## Release Process
 Releases are fully automated via GitHub Actions.
 
