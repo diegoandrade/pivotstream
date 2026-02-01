@@ -1,5 +1,6 @@
 # PivotStream Studio
 
+[![Security](https://img.shields.io/badge/Security-Policy-blue.svg)](SECURITY.md)
 [![Code of Conduct](https://img.shields.io/badge/Code%20of%20Conduct-Contributor%20Covenant%202.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 A lightweight RSVP (rapid serial visual presentation) reader that keeps the Optimal Recognition Point (ORP) fixed in the center so your eyes don’t move. Paste text or import an EPUB/PDF, set WPM, and read.
@@ -44,6 +45,9 @@ pre-commit run --all-files
 
 ## Code of Conduct
 We are committed to fostering a welcoming community. Please review the Code of Conduct before contributing: `CODE_OF_CONDUCT.md`.
+
+## Security
+Please report security issues responsibly. See `SECURITY.md` for details.
 
 ### Changelog
 Generate or update `CHANGELOG.md` locally:
