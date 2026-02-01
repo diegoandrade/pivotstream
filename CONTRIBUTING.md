@@ -1,5 +1,7 @@
 # Contributing
 
+By participating in this project, you agree to abide by our Code of Conduct.
+
 Thanks for helping improve PivotStream!
 
 ## Setup
