@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+message_file="$1"
+if [[ -z "${message_file}" || ! -f "${message_file}" ]]; then
+  echo "commit-msg: missing commit message file" >&2
+  exit 1
+fi
+
+header=$(head -n 1 "$message_file" | tr -d '\r')
+body=$(tail -n +2 "$message_file" | tr -d '\r')
+
+pattern='^(feat|fix|docs|chore|ci|test|refactor|perf|security)(\((cli|core|subprocess|docs|ci|deps)\))?(!)?: (.+)$'
+
+if [[ ! "$header" =~ $pattern ]]; then
+  cat <<'MSG' >&2
+Invalid commit message format.
+Expected: type(scope): description
+
+Examples:
+  feat(core): add retry support for worker shutdown
+  fix(cli): handle empty input config
+  docs: update installation instructions
+  feat(cli)!: change default config file location
+MSG
+  exit 1
+fi
+
+subject="${BASH_REMATCH[5]}"
+if [[ ${#subject} -lt 10 ]]; then
+  echo "Description is too short (${#subject} chars). Minimum is 10 characters." >&2
+  echo "Example: fix(core): resolve timeout handling in monitor thread" >&2
+  exit 1
+fi
+
+if echo "$body" | grep -Eq 'BREAKING CHANGE:|BREAKING-CHANGE:'; then
+  :
+fi
+
+exit 0

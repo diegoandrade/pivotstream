@@ -36,6 +36,11 @@ type(scope): description
 Types: `feat`, `fix`, `docs`, `chore`, `ci`, `test`, `refactor`, `perf`, `security`
 Scopes: `cli`, `core`, `subprocess`, `docs`, `ci`, `deps`
 
+Guidelines:
+- Use the imperative mood in the subject (e.g., "add", "fix", "update").
+- Keep the subject lowercase and at least 10 characters.
+- Use `!` or a `BREAKING CHANGE:` footer for breaking changes.
+
 ### Valid PR titles
 - `fix(core): resolve timeout handling in monitor thread`
 - `docs: update installation instructions`
@@ -53,6 +58,38 @@ We provide a commit template at `.gitmessage`. Configure it locally:
 ```bash
 git config commit.template .gitmessage
 ```
+
+### Local validation hooks
+Enable the local commit-msg hook and pre-commit validation:
+```bash
+git config core.hooksPath .githooks
+pre-commit install --hook-type commit-msg
+```
+
+### Bump examples
+- **major**: `feat(core)!: remove deprecated config` or footer `BREAKING CHANGE: remove legacy API`
+- **minor**: `feat(cli): add interactive setup`
+- **patch**: `fix(core): handle empty input`
+
+### Migration guide (why + how)
+We use conventional commits to automate releases, changelogs, and version bumps.
+
+If you need to rewrite recent commits:
+```bash
+git rebase -i HEAD~3
+# change "pick" to "reword" for commits you need to edit
+```
+
+Cheat sheet:
+- `feat`: new feature
+- `fix`: bug fix
+- `docs`: documentation changes
+- `chore`: maintenance tasks
+- `ci`: CI workflow changes
+- `test`: tests only
+- `refactor`: code refactor (no behavior change)
+- `perf`: performance improvements
+- `security`: security fixes
 
 ## Release Process
 Releases are fully automated via GitHub Actions.
